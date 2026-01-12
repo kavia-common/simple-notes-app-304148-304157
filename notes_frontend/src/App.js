@@ -25,9 +25,15 @@ function App() {
     deleteNote(id);
   }
 
+  function handleSearchChange(value) {
+    // Placeholder hook: NavBar search is not wired to filtering yet.
+    // Keeping handler in place so consumers can integrate later without changing NavBar API.
+    void value;
+  }
+
   return (
     <div className="AppShell">
-      <Navbar onNewNote={handleNewNote} apiEnabled={apiEnabled} />
+      <Navbar title="Simple Notes" onNewNote={handleNewNote} onSearchChange={handleSearchChange} apiEnabled={apiEnabled} />
 
       <main className="Main" role="main">
         <div className="Split">

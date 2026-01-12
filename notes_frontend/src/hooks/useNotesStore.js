@@ -28,12 +28,23 @@ function safeParse(json, fallback) {
   }
 }
 
+function normalizeNote(raw) {
+  // Ensure new fields are present even for previously-saved notes.
+  // This keeps the change backwards-compatible with existing localStorage data.
+  return {
+    pinned: false,
+    ...raw,
+    pinned: Boolean(raw?.pinned),
+  };
+}
+
 function loadFromLocalStorage() {
   if (typeof window === "undefined") return [];
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   const parsed = safeParse(raw, []);
-  return Array.isArray(parsed) ? parsed : [];
+  const arr = Array.isArray(parsed) ? parsed : [];
+  return arr.map(normalizeNote);
 }
 
 function saveToLocalStorage(notes) {
@@ -41,8 +52,28 @@ function saveToLocalStorage(notes) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
 }
 
-function sortNotesDesc(notes) {
-  return [...notes].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+/**
+ * Sort behavior:
+ * - pinned notes first
+ * - within pinned/unpinned groups, keep "most recently updated" first
+ * - final stable-ish tie-breaker by title asc (to avoid jitter if timestamps missing)
+ */
+function sortNotes(notes) {
+  return [...notes].sort((a, b) => {
+    const ap = a.pinned ? 1 : 0;
+    const bp = b.pinned ? 1 : 0;
+    if (ap !== bp) return bp - ap;
+
+    const au = a.updatedAt || a.createdAt || 0;
+    const bu = b.updatedAt || b.createdAt || 0;
+    if (au !== bu) return bu - au;
+
+    const at = String(a.title || "").trim().toLowerCase();
+    const bt = String(b.title || "").trim().toLowerCase();
+    if (at < bt) return -1;
+    if (at > bt) return 1;
+    return 0;
+  });
 }
 
 /**
@@ -51,8 +82,11 @@ function sortNotesDesc(notes) {
  * Structured so API integration can later be enabled via REACT_APP_API_BASE.
  */
 export function useNotesStore() {
-  /** @type {[Array<{id:string,title:string,content:string,createdAt:number,updatedAt:number}>, Function]} */
-  const [notes, setNotes] = useState(() => sortNotesDesc(loadFromLocalStorage()));
+  /**
+   * Note shape:
+   * { id, title, content, pinned, createdAt, updatedAt }
+   */
+  const [notes, setNotes] = useState(() => sortNotes(loadFromLocalStorage()));
   const [selectedId, setSelectedId] = useState(() => (loadFromLocalStorage()[0]?.id ? loadFromLocalStorage()[0].id : null));
   const didHydrateRef = useRef(false);
 
@@ -62,7 +96,7 @@ export function useNotesStore() {
 
     async function hydrate() {
       // Always start from local to keep app fast ensures offline mode.
-      const localNotes = sortNotesDesc(loadFromLocalStorage());
+      const localNotes = sortNotes(loadFromLocalStorage());
       if (!cancelled) {
         setNotes(localNotes);
         setSelectedId((prev) => prev ?? localNotes[0]?.id ?? null);
@@ -118,11 +152,12 @@ export function useNotesStore() {
       id: uuid(),
       title: "",
       content: "",
+      pinned: false,
       createdAt: ts,
       updatedAt: ts,
     };
 
-    setNotes((prev) => sortNotesDesc([note, ...prev]));
+    setNotes((prev) => sortNotes([note, ...prev]));
     setSelectedId(note.id);
 
     // Fire-and-forget API (guarded).
@@ -141,17 +176,18 @@ export function useNotesStore() {
 
   /**
    * PUBLIC_INTERFACE
-   * Update title/content for the selected note (autosave behavior).
+   * Update note fields. Includes pinned state in patch when provided.
    * @param {string} id
-   * @param {{title?: string, content?: string}} patch
+   * @param {{title?: string, content?: string, pinned?: boolean}} patch
    */
   function updateNote(id, patch) {
     const ts = now();
     setNotes((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: ts } : n));
-      return sortNotesDesc(next);
+      const next = prev.map((n) => (n.id === id ? normalizeNote({ ...n, ...patch, updatedAt: ts }) : n));
+      return sortNotes(next);
     });
 
+    // Keep API payload "ready": pinned travels with note updates.
     api.updateNote(id, { ...patch, updatedAt: ts }).catch(() => {});
   }
 

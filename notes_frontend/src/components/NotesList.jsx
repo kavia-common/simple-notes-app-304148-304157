@@ -21,8 +21,11 @@ function noteTitle(note) {
  * PUBLIC_INTERFACE
  * Sidebar notes list with search and selection.
  */
-export default function NotesList({ notes, selectedId, onSelect, onDelete }) {
+export default function NotesList({ notes, selectedId, onSelect, onDelete, onTogglePinned }) {
   const [query, setQuery] = useState("");
+
+  // Optional enhancement: add a filter control All / Pinned / Unpinned here if desired.
+  // TODO: Keep it simple for now; implement if/when requested.
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -60,6 +63,7 @@ export default function NotesList({ notes, selectedId, onSelect, onDelete }) {
           <ul className="NotesList__items" role="list">
             {filtered.map((n) => {
               const isSelected = n.id === selectedId;
+
               return (
                 <li key={n.id} className={`NotesList__item ${isSelected ? "is-selected" : ""}`}>
                   <button
@@ -68,19 +72,48 @@ export default function NotesList({ notes, selectedId, onSelect, onDelete }) {
                     onClick={() => onSelect(n.id)}
                     aria-current={isSelected ? "true" : "false"}
                   >
-                    <div className="NotesList__itemTitle">{noteTitle(n)}</div>
+                    <div className="NotesList__itemTitle">
+                      {noteTitle(n)}
+                      {n.pinned ? (
+                        <span className="PinBadge" aria-label="Pinned note">
+                          Pinned
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="NotesList__itemMeta">{formatUpdatedTime(n.updatedAt)}</div>
                   </button>
 
-                  <button
-                    type="button"
-                    className="NotesList__deleteButton"
-                    onClick={() => onDelete(n.id)}
-                    aria-label={`Delete ${noteTitle(n)}`}
-                    title="Delete note"
-                  >
-                    Delete
-                  </button>
+                  <div className="NotesList__itemActions" aria-label="Note actions">
+                    <button
+                      type="button"
+                      className={`IconButton ${n.pinned ? "is-active" : ""}`}
+                      onClick={(e) => {
+                        // Prevent triggering selection when clicking the pin control.
+                        e.stopPropagation();
+                        onTogglePinned && onTogglePinned(n.id);
+                      }}
+                      aria-pressed={n.pinned ? "true" : "false"}
+                      aria-label={n.pinned ? `Unpin ${noteTitle(n)}` : `Pin ${noteTitle(n)}`}
+                      title={n.pinned ? "Unpin" : "Pin"}
+                      disabled={!onTogglePinned}
+                    >
+                      <span aria-hidden="true">{n.pinned ? "📌" : "📍"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="NotesList__deleteButton"
+                      onClick={(e) => {
+                        // Prevent triggering selection when clicking delete.
+                        e.stopPropagation();
+                        onDelete(n.id);
+                      }}
+                      aria-label={`Delete ${noteTitle(n)}`}
+                      title="Delete note"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </li>
               );
             })}

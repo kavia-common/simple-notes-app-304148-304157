@@ -38,7 +38,17 @@ function App() {
       <main className="Main" role="main">
         <div className="Split">
           <div className="Split__left">
-            <NotesList notes={notes} selectedId={selectedId} onSelect={selectNote} onDelete={handleDelete} />
+            <NotesList
+              notes={notes}
+              selectedId={selectedId}
+              onSelect={selectNote}
+              onDelete={handleDelete}
+              onTogglePinned={(id) => {
+                const n = notes.find((x) => x.id === id);
+                if (!n) return;
+                updateNote(id, { pinned: !n.pinned });
+              }}
+            />
           </div>
 
           <div className="Split__right">
@@ -57,6 +67,7 @@ function App() {
             ) : (
               <Editor
                 note={selectedNote}
+                onTogglePinned={() => selectedNote && updateNote(selectedNote.id, { pinned: !selectedNote.pinned })}
                 onChangeTitle={(title) => selectedNote && updateNote(selectedNote.id, { title })}
                 onChangeContent={(content) => selectedNote && updateNote(selectedNote.id, { content })}
               />

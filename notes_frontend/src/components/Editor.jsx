@@ -9,7 +9,7 @@ function titleForHeader(note) {
  * PUBLIC_INTERFACE
  * Right pane editor for viewing/editing a single note.
  */
-export default function Editor({ note, onChangeTitle, onChangeContent }) {
+export default function Editor({ note, onTogglePinned, onChangeTitle, onChangeContent }) {
   const [localTitle, setLocalTitle] = useState(note?.title || "");
   const [localContent, setLocalContent] = useState(note?.content || "");
 
@@ -33,9 +33,29 @@ export default function Editor({ note, onChangeTitle, onChangeContent }) {
   return (
     <section className="Editor" aria-label="Note editor">
       <div className="Editor__header">
-        <div className="Editor__headerTitle" aria-label="Current note">
-          {titleForHeader(note)}
+        <div className="Editor__headerTop">
+          <div className="Editor__headerTitle" aria-label="Current note">
+            {titleForHeader(note)}
+            {note.pinned ? (
+              <span className="PinBadge" aria-label="Pinned note">
+                Pinned
+              </span>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            className={`IconButton ${note.pinned ? "is-active" : ""}`}
+            onClick={() => onTogglePinned && onTogglePinned()}
+            aria-pressed={note.pinned ? "true" : "false"}
+            aria-label={note.pinned ? "Unpin note" : "Pin note"}
+            title={note.pinned ? "Unpin" : "Pin"}
+            disabled={!onTogglePinned}
+          >
+            <span aria-hidden="true">{note.pinned ? "📌" : "📍"}</span>
+          </button>
         </div>
+
         <div className="Editor__headerMeta">
           Updated:{" "}
           {new Date(note.updatedAt).toLocaleString([], {

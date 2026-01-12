@@ -1,104 +1,336 @@
-/* CSS Variables for Theme Management */
+/* Simple Notes App - Light theme (modern, clean) */
 :root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  --primary: #3b82f6;
+  --success: #06b6d4;
+  --danger: #ef4444;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 20px rgba(0, 0, 0, 0.04);
+  --radius: 12px;
+
+  --font: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
 }
 
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
+* {
+  box-sizing: border-box;
 }
 
-.App {
-  text-align: center;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+html,
+body,
+#root {
+  height: 100%;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: var(--bg-secondary);
-  min-height: 100vh;
+.AppShell {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Navbar */
+.Navbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-  position: relative;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+.Navbar__left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.theme-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
+.Navbar__brand {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.Navbar__meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Buttons + inputs */
+.btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--surface);
+  color: var(--text);
 }
 
-.theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+.btn:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
 }
 
-.theme-toggle:active {
-  transform: translateY(0);
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.btn-primary:hover {
+  filter: brightness(0.98);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Main / Split layout */
+.Main {
+  flex: 1;
+  padding: 16px;
+}
+
+.Split {
+  height: calc(100vh - 56px - 32px); /* navbar + main padding */
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.Split__left,
+.Split__right {
+  min-height: 0; /* allow internal scroll areas */
+}
+
+/* Sidebar */
+.NotesList {
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.NotesList__header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.06), rgba(255, 255, 255, 0));
+}
+
+.NotesList__searchLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.NotesList__body {
+  overflow: auto;
+  flex: 1;
+}
+
+.NotesList__items {
+  list-style: none;
+  padding: 6px;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.NotesList__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.NotesList__item.is-selected {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+.NotesList__itemButton {
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 10px 10px;
+  cursor: pointer;
+}
+
+.NotesList__itemButton:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.NotesList__itemTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.NotesList__itemMeta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.NotesList__deleteButton {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.NotesList__deleteButton:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Editor */
+.Editor {
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.Editor__header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 0.08), rgba(255, 255, 255, 0));
+}
+
+.Editor__headerTitle {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.Editor__headerMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.Editor__fields {
+  padding: 12px 16px 16px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.input--title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.textarea {
+  min-height: 360px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Empty states */
+.emptyState {
+  padding: 22px 16px;
+  color: var(--muted);
+}
+
+.emptyState--center {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 28px;
+}
+
+.emptyState__title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.emptyState__desc {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 900px) {
+  .Main {
+    padding: 12px;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-/* Responsive design for mobile */
-@media (max-width: 768px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px 16px;
-    font-size: 12px;
+  .Split {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .NotesList,
+  .Editor {
+    height: auto;
+    min-height: 320px;
   }
 }

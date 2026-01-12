@@ -1,47 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useMemo } from "react";
+import "./App.css";
+import Navbar from "./components/Navbar";
+import NotesList from "./components/NotesList";
+import Editor from "./components/Editor";
+import { useNotesStore } from "./hooks/useNotesStore";
+import { api } from "./lib/api";
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  const { notes, selectedId, selectedNote, createNote, selectNote, updateNote, deleteNote } = useNotesStore();
 
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+  const apiEnabled = useMemo(() => api.isEnabled(), []);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  function handleNewNote() {
+    createNote();
+  }
+
+  function handleDelete(id) {
+    const note = notes.find((n) => n.id === id);
+    const title = (note?.title || "").trim() || "Untitled";
+    const ok = window.confirm(`Delete "${title}"? This cannot be undone.`);
+    if (!ok) return;
+
+    deleteNote(id);
+  }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="AppShell">
+      <Navbar onNewNote={handleNewNote} apiEnabled={apiEnabled} />
+
+      <main className="Main" role="main">
+        <div className="Split">
+          <div className="Split__left">
+            <NotesList notes={notes} selectedId={selectedId} onSelect={selectNote} onDelete={handleDelete} />
+          </div>
+
+          <div className="Split__right">
+            {notes.length === 0 ? (
+              <div className="Editor">
+                <div className="emptyState emptyState--center">
+                  <div className="emptyState__title">No notes yet</div>
+                  <div className="emptyState__desc">Create your first note to get started.</div>
+                  <div style={{ marginTop: 12 }}>
+                    <button className="btn btn-primary" type="button" onClick={handleNewNote}>
+                      Create a note
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Editor
+                note={selectedNote}
+                onChangeTitle={(title) => selectedNote && updateNote(selectedNote.id, { title })}
+                onChangeContent={(content) => selectedNote && updateNote(selectedNote.id, { content })}
+              />
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
